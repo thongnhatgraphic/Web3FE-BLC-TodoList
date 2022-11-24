@@ -5,6 +5,7 @@ import { useWeb3React } from "@web3-react/core";
 import { connectors } from "./connector";
 
 import abiTodo from "./abi/todolist.json"
+import erc721 from "./abi/erc721.json"
 
 import Web3 from "web3"
 
@@ -30,7 +31,7 @@ function App() {
   const [signedMessage, setSignedMessage] = useState("");
   
   const [ array, setArray ] = useState([])
-
+  
   const switchNetwork  = React.useCallback(() => {
     const init = async () => {
     const web3 = new Web3(library.provider);
@@ -68,13 +69,15 @@ function App() {
 
   const getTodoListOfAccount = React.useCallback(async() => {
     const web3 = new Web3(library.provider);
-
-    const Contract = new web3.eth.Contract(abiTodo, "0xB0A2D61Bbf572352F44580190b60C69425789F80");
-
+     
+    const Contract = new web3.eth.Contract(abiTodo, "0x8853164661c6531152cf8974001E897fD1be5A57");
+    console.log("contract", Contract);
     const arrayRes = await Contract.methods.getListTodoOfAddress().call({
       from: account
     })
-    
+
+
+    console.log("-----",arrayRes);
     const cl = []
     arrayRes.forEach(item => {
       if ( item.length && item.owner !== "0x0000000000000000000000000000000000000000") {
@@ -87,12 +90,14 @@ function App() {
         })
       }
     })
+
+    console.log("<<<<<<<<<---->>>>>>>>>>", cl);
     setArray(cl);
   }, [account, library])
 
   // console.log("signature", "34", signedMessage);`
   const [WEB3, SETWEB3] = useState(null);
-  console.log("WEB3", WEB3);
+  
   React.useEffect(() => {
     const provider = window.localStorage.getItem("provider");
     if (provider) {
@@ -100,29 +105,31 @@ function App() {
       // switchNetwork()
      };
      SETWEB3(connectors[provider])
-  }, [activate,]);
-
-  // React.useEffect(() => {
-  //   if ( library && library.provider) {
-  //     getTodoListOfAccount();
-  //   } return;
-      
-  // },[getTodoListOfAccount, library])
+  }, [activate]);
 
   React.useEffect(() => {
-    // const web3 = new Web3(library.provider);
+    if ( library && library.provider) {
+      console.log("herrrre");
+      getTodoListOfAccount();
+      console.log("arrrrrr");
+    } return;
+      
+  },[getTodoListOfAccount, library])
 
-    if ( account && chainId !== 97) {
-      console.log("------------");
-      const changeNetWorkAndInit = async () => {
-        await switchNetwork();
-        await getTodoListOfAccount();
+  // React.useEffect(() => {
+  //   // const web3 = new Web3(library.provider);
 
-      }
-      changeNetWorkAndInit();
-    }
+  //   if ( account && chainId !== 97) {
+  //     console.log("------------");
+  //     const changeNetWorkAndInit = async () => {
+  //       await switchNetwork();
+  //       await getTodoListOfAccount();
+
+  //     }
+  //     changeNetWorkAndInit();
+  //   }
     
-  },[account, chainId, getTodoListOfAccount, library, switchNetwork])
+  // },[account, chainId, getTodoListOfAccount, switchNetwork])
 
   console.log("chaiId", chainId);
   const setProvider = (type) => {
@@ -133,7 +140,8 @@ function App() {
   const addTodoItem = async () => {
     
     const web3 = new Web3(library.provider);
-    const Contract = new web3.eth.Contract(abiTodo, "0xB0A2D61Bbf572352F44580190b60C69425789F80");
+    const Contract = new web3.eth.Contract(abiTodo, "0x8853164661c6531152cf8974001E897fD1be5A57");
+    console.log("add to do item", Contract);
     const gas = await web3.eth.getGasPrice();
     await Contract.methods.addTodoItem(inputAddTodo).send({
       from: account,
@@ -147,7 +155,7 @@ function App() {
   const editAnItem = async(id, _desription) => {
     // console.log("-------", id, typeof(id), Number(id));
     const web3 = new Web3(library.provider);
-    const Contract= new web3.eth.Contract(abiTodo, "0xB0A2D61Bbf572352F44580190b60C69425789F80");
+    const Contract= new web3.eth.Contract(abiTodo, "0x8853164661c6531152cf8974001E897fD1be5A57");
 
     await Contract.methods.editTodoItem(Number(id), _desription, true).send({
       from: account
@@ -157,7 +165,7 @@ function App() {
 
   const deleteAnItem = async(id) => {
     const web3 = new Web3(library.provider);
-    const Contract= new web3.eth.Contract(abiTodo, "0xB0A2D61Bbf572352F44580190b60C69425789F80");
+    const Contract= new web3.eth.Contract(abiTodo, "0x8853164661c6531152cf8974001E897fD1be5A57");
     await Contract.methods.removeTodoItem(Number(id)).send({
       from: account
     })
@@ -166,10 +174,19 @@ function App() {
   }
 
  
-console.log("arra", array);
+  const handleMintNft = async () => {
+    const web3 = new Web3(library.provider);
+    const Contract= new web3.eth.Contract(erc721, "0xB06E58dbDb9cf91946e551b50418c29fECb6Fa02");
+    const data = await Contract.methods.createNft().send({
+      from: account
+    });
+    console.log("----", data);
+  }
   
   return (
     <div className="App">
+      <button onClick={handleMintNft}>Mint Nft</button>
+
       <div>account is logging: {account}</div>
       <button onClick={async() => {
         const web3 = new Web3(library.provider);
@@ -180,17 +197,11 @@ console.log("arra", array);
         
       }}>Send Signature to BE</button>
       <br/>
-      <button onClick={switchNetwork}>Switch network</button>
+      {/* <button onClick={switchNetwork}>Switch network</button> */}
       <br/>
       <button
         onClick={async() => {
-          activate(connectors.injected);
-          // setProvider("injected");
-            // switchNetwork();
-
-          // await activate(connectors.injected);
-          // SETWEB3()
-          
+          await activate(connectors.injected);
         }}
       >Connect</button>
 
