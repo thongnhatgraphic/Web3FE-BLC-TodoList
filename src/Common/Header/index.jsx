@@ -7,14 +7,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { connectors } from "../../utils/connector"
 import market from "../../assets/logo/market.png"
 import { useContract } from "../../hook/useContract";
-import { login } from "../../features/auth/authSlice"
+import { login, logout } from "../../features/auth/authSlice"
 
 const HeaderCPN = () => {
-    const {
-        account,
-        switchNetwork,
-        library
-    } = useContract();
 
     const dispatch = useDispatch();
     const {address} = useSelector(state=> state.auth)
@@ -23,7 +18,18 @@ const HeaderCPN = () => {
         deactivate
     } = useWeb3React();
 
-    console.log("library", library);
+    const {
+        library,
+        chainId,
+        account,
+        switchNetwork
+    } = useContract();
+
+    React.useEffect(() => {
+        if ( localStorage.getItem("provider") ) {
+            activate(connectors.provider);
+        }
+    }, [activate])
 
     React.useEffect(() => {
         if ( account ) {
@@ -39,15 +45,16 @@ const HeaderCPN = () => {
         <div className="block_wallet">
             { !address ? <Button
                 onClick={async () => {
-                    await switchNetwork();
+                    switchNetwork();
                     await activate(connectors.injected);
+                    await dispatch(login(account));
                 }}
             >
                 connect wallet
             </Button>: "" }
             { address ? <Button onClick={ () => {
                 deactivate()
-                localStorage.removeItem("provider");
+                dispatch(logout());
             }}>
                 Loggout
             </Button> : ""}

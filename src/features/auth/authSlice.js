@@ -7,16 +7,20 @@ const initialState = {
 };
 
 export const Auth = createSlice({
-  name: 'counter',
+  name: 'auth',
   initialState,
   // The `reducers` field lets us define reducers and generate associated actions
   reducers: {
     
     login: (state, action) => {
-        if ( action.payload?.address) {
-            state.address = action.payload.address
+        if ( action.payload) {
+            state.address = action.payload
         }
-
+    },
+    logout: (state) => {
+      state.address = initialState.address
+      state.balance = initialState.balance
+      state.isConnect = initialState.isConnect
     }
   },
   
@@ -25,7 +29,7 @@ export const Auth = createSlice({
   },
 });
 
-export const { login } = Auth.actions;
+export const { login, logout } = Auth.actions;
 
 
 export default Auth.reducer;
