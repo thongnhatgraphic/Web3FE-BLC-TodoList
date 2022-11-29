@@ -1,4 +1,5 @@
 import { useWeb3React } from "@web3-react/core";
+import { ethers } from "ethers";
 import React from "react";
 import { useDispatch } from "react-redux";
 import Web3 from "web3";
@@ -7,6 +8,7 @@ import erc20 from "../abi/erc20.json";
 import erc721 from "../abi/erc721.json";
 import market from "../abi/market.json";
 import { login, logout } from "../features/auth/authSlice.js";
+import { n4 } from "../utils/formatCurrency";
 
 const isConnectMetamask = "isConnectMetamask";
 
@@ -31,51 +33,120 @@ export const useContract = () => {
       const accounts = await ethereum.request({ method: "eth_accounts" });
 
       if (accounts?.length) {
-        if ( contractErc20 ) {
-            const balance = await contractErc20.methods
-              .balanceOf(accounts[0])
-              .call({
-                from: accounts[0],
-              });
-              dispatch(
-                login({
-                  address: accounts[0],
-                  balance,
-                })
-              );
+        if (contractErc20) {
+          const balance = await contractErc20.methods
+            .balanceOf(accounts[0])
+            .call({
+              from: accounts[0],
+            });
+          dispatch(
+            login({
+              address: accounts[0],
+              balance: +balance/10**18,
+            })
+          );
         }
       }
     })();
   }, [dispatch, ethereum, initContract]);
 
+  const switchNetwork = React.useCallback(() => {
+    const init = async () => {
+      const web3 = new Web3(ethereum);
+      const chaindCurrent = await web3.eth.getChainId()
+      console.log("chaindCurrent", chaindCurrent);
+      const chaindCurrentTohex = web3.utils.toHex(chaindCurrent);
+
+      const toHex = async(chainId) =>  {
+        return web3.utils.toHex(chainId)
+      };
+      const chaind = await toHex(97);
+      console.log("chaindCurrentTohex", chaindCurrentTohex, chaind);
+      if ( chaindCurrentTohex !== chaind) {
+        try { 
+          console.log("ehrerre");
+          return await ethereum.request({
+            method: 'wallet_switchEthereumChain',
+              params: [{ chainId: chaind }],
+            });
+        } catch (error) {
+
+        }
+
+      }
+
+      // try {
+      //   console.log("rrr");
+      //   if ( chaindCurrentTohex !== chaind) {
+
+      //     console.log("1111");
+      //     await ethereum.request({
+      //       method: "wallet_switchEthereumChain",
+      //       params: [{ chainId: chaind }],
+      //     });
+      //     console.log("chained");
+      //     return true
+      //   } else if ( chaindCurrentTohex === chaind) {
+      //     console.log("no change");
+      //     return true
+      //   }
+      // } catch (switchError) {
+      //   if (switchError.code === 4902) {
+      //     try {
+      //       await ethereum.request({
+      //         method: "wallet_addEthereumChain",
+      //         params: [
+      //           {
+      //             chainId: chaind,
+      //             chainName: "BSC",
+      //             rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545/"],
+      //             blockExplorerUrls: ["https://testnet.bscscan.com/"],
+      //           },
+      //         ],
+      //       });
+      //       return true
+      //     } catch (addError) {
+      //       console.log("hrer");
+      //       throw addError;
+      //     }
+      //   }
+      // }
+    };
+
+    init();
+  }, [ethereum]);
+  
   const connectWallet = async () => {
     if (!ethereum) return alert("Please install metamask");
 
-    return ethereum
+    ethereum
       .request({
         method: "wallet_requestPermissions",
+        // eth_requestAccounts
         params: [{ eth_accounts: {} }],
       })
       .then(async (account) => {
         localStorage.setItem(isConnectMetamask, true);
-
+        
         const { contractErc20 } = initContract;
         const balance = await contractErc20.methods
           .balanceOf(account[0].caveats[0].value[0])
           .call({
             from: account[0].caveats[0].value[0],
           });
-
+        
         dispatch(
           login({
             address: account[0].caveats[0].value[0],
-            balance,
+            balance: +balance/10**18,
           })
         );
+        
       })
       .catch((err) => {
-        console.error("requestPermissions error", err);
-      });
+        console.error("requestPermissions ---error", err);  
+      })
+      
   };
 
   const logOut = () => {
@@ -83,70 +154,34 @@ export const useContract = () => {
     dispatch(logout());
   };
 
+  
+
   const initAllContract = React.useCallback(() => {
     (async () => {
-      const web3Init = new Web3(
-        "https://data-seed-prebsc-1-s1.binance.org:8545/"
-      );
-
-      const ContractERC20 = new web3Init.eth.Contract(
+      const web3 = new Web3(ethereum);
+      ethereum.enable();
+      const ContractERC20 = new web3.eth.Contract(
         erc20,
         process.env.REACT_APP_CONTRACT_ERC20
       );
-      const ContractERC721 = new web3Init.eth.Contract(
+      const ContractERC721 = new web3.eth.Contract(
         erc721,
         process.env.REACT_APP_CONTRACT_ERC721
       );
 
-      const ContractMarketPlace = new web3Init.eth.Contract(
+      const ContractMarketPlace = new web3.eth.Contract(
         market,
         process.env.REACT_APP_CONTRACT_MARKET
-      )
+      );
 
       setInitContract({
         contractErc20: ContractERC20,
         contractErc721: ContractERC721,
-        ContractMarketPlace: ContractMarketPlace,
-        
+        contractMarketPlace: ContractMarketPlace,
       });
+      
     })();
-  }, []);
-
-  const switchNetwork = React.useCallback(() => {
-    const init = async () => {
-      const web3 = new Web3(library.provider);
-      const toHex = (chainId) => web3.utils.toHex(chainId);
-      console.log("toHex", toHex);
-      try {
-        await library.provider.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: toHex(97) }],
-        });
-      } catch (switchError) {
-        if (switchError.code === 4902) {
-          try {
-            await library.provider.request({
-              method: "wallet_addEthereumChain",
-              params: [
-                {
-                  chainId: toHex(97),
-                  chainName: "BSC",
-                  rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545/"],
-                  blockExplorerUrls: ["https://testnet.bscscan.com/"],
-                },
-              ],
-            });
-          } catch (addError) {
-            throw addError;
-          }
-        }
-      }
-    };
-
-    if (library?.provider) {
-      init();
-    } else return;
-  }, [library]);
+  }, [ethereum]);
 
   const signature = async () => {
     const web3 = new Web3(library.provider);
@@ -159,7 +194,9 @@ export const useContract = () => {
     return signature;
   };
 
-
+  const reConnectAndInit=() => {
+    initAllContract();
+  }
 
   React.useEffect(() => {
     initAllContract();
@@ -179,6 +216,7 @@ export const useContract = () => {
     chainId,
     account,
 
+    reConnectAndInit,
     signature,
     switchNetwork,
     checkWalletConnected,

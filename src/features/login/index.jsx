@@ -5,12 +5,14 @@ import { useNavigate } from "react-router-dom";
 const LoginPage = () => {
 
     const { address } = useSelector(state => state.auth)
+    
     const navigate = useNavigate();
 
     React.useEffect(() => {
         if ( address ) {
             navigate("/");
-        } 
+        } else {
+        }
     }, [address, navigate])
 
     return <div style={{
@@ -20,7 +22,7 @@ const LoginPage = () => {
         width: "100%",
         alignItems: "center"
     }}>
-    Hello Welcome to MarketPlace
+        Hello Welcome to MarketPlace
     </div>
 }
 

@@ -4,10 +4,12 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import FooterCPN from "./Common/Footer";
 import HeaderCPN from "./Common/Header";
 import LayoutLogin from "./Component/LayoutLogin";
+import Assets from "./features/assets/page";
 import LoginPage from "./features/login";
 import Marketplace from "./features/market/page";
 
 function App() {
+  
   return (
     <BrowserRouter>
       <div className="App">
@@ -20,9 +22,10 @@ function App() {
             redirect={<Navigate to="/login" replace />}
           >
             <Route path="/" element={<Marketplace />} />
+            <Route path="/assets" element={<Assets />} />
           </Route>
         </Routes>
-        <FooterCPN />
+        {/* <FooterCPN /> */}
       </div>
     </BrowserRouter>
   );

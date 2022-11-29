@@ -13,6 +13,7 @@ const root = createRoot(container);
 
 const getLibrary = (provider) => {
   const library = new ethers.providers.Web3Provider(provider);
+  console.log("library", library);
   library.pollingInterval = 8000; // frequency provider is polling
   return library;
 };

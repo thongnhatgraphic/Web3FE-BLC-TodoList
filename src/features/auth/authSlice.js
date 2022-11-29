@@ -15,6 +15,7 @@ export const Auth = createSlice({
       if (action.payload) {
         state.address = action.payload.address;
         state.balance = action.payload.balance
+        state.isConnect = true
       }
     },
     logout: (state) => {

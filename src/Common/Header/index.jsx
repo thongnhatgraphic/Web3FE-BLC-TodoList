@@ -7,13 +7,14 @@ import { useNavigate } from "react-router-dom";
 import market from "../../assets/logo/market.png";
 import { useContract } from "../../hook/useContract";
 import { truncateAddress } from "../../utils/formatAddress"
+import { n4 } from "../../utils/formatCurrency"
 
 const HeaderCPN = () => {
   const navigate = useNavigate();
 
   const { address, balance } = useSelector((state) => state.auth);
 
-  const { connectWallet, logOut } = useContract();
+  const { switchNetwork, connectWallet, logOut } = useContract();
 
   return (
     <Header>
@@ -40,7 +41,7 @@ const HeaderCPN = () => {
                     {truncateAddress(address)}
                 </div>
                 <div className="balance">
-                    EUC: {balance}
+                    EUC: {n4.format(+balance)}
                 </div>
             </div>
             <Button
